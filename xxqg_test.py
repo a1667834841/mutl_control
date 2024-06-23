@@ -1,6 +1,7 @@
 import logging
 from device.virtual_device_manager import VirtualDeviceManager as Vdm
 from xxqg import User, Xxqg,XXQG_APP_PACKAGE
+from answer import AnswerUpdator
 
 
 vdm = Vdm()
@@ -22,4 +23,23 @@ def test_app_login():
     xxqg.start_app()
     xxqg.login()
 
-test_app_login()
+def test_app_enter_score():
+    """
+    测试app进入积分
+    """
+    score,go_on = xxqg.enter_score()
+    assert score > 0
+
+def test_app_study():
+    """
+    测试app登出
+    """
+    xxqg.study()
+
+def test_tiku_update():
+    """
+    测试题库更新
+    """
+    AnswerUpdator.update()
+
+test_app_study()
