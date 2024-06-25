@@ -2,9 +2,9 @@
 uiauto.dev
 
 ## 测试命令
-pytest xxqg_test.py::test_app_start
-pytest xxqg_test.py::test_app_login
-pytest xxqg_test.py::test_app_study
+pytest scripts/qg/xxqg_test.py::test_app_start
+pytest scripts/qg/xxqg_test.py::test_app_login
+pytest scripts/qg/xxqg_test.py::test_app_study
 
 
 https://github.com/openatx/uiautomator2/blob/master/QUICK_REFERENCE.md

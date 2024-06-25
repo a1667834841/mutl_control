@@ -1,13 +1,16 @@
-import logging
-from device.virtual_device_manager import VirtualDeviceManager as Vdm
-from xxqg import User, Xxqg,XXQG_APP_PACKAGE
-from answer import AnswerUpdator
+import os,sys
+sys.path.append(os.getcwd())
+from device.virtual_device_manager import VirtualDeviceManager
+from scripts.qg.xxqg import User , Xxqg , XXQG_APP_PACKAGE
+from answer.AnswerTask import *
+from answer.AnswerUpdator import *
 
-
-vdm = Vdm()
-vd = vdm.get_device("emulator-5554")
+vdm = VirtualDeviceManager()
+# vd = vdm.get_device("emulator-5554")
+vd = vdm.get_device("126e153a")
 login_user = User("13217913287","a13014483325")
 xxqg = Xxqg(vd,login_user)
+
 
 def test_app_start():
     """
@@ -40,6 +43,7 @@ def test_tiku_update():
     """
     测试题库更新
     """
-    AnswerUpdator.update()
+    update()
 
-test_app_study()
+if __name__ == "__main__":
+    test_app_start()

@@ -2,7 +2,7 @@
 import io
 import re
 import traceback
-from answer import AnswerHelper
+from answer.AnswerHelper import *
 from db import DBHelper
 import config
 import time

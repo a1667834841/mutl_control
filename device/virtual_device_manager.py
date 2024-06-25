@@ -1,9 +1,13 @@
 import os
+import sys
 from adbutils import adb
 import uiautomator2 as u2
 import logging
 
 from device.virtual_device import VirtualDevice,DeviceStatus
+
+# 把当前文件所在文件夹的父文件夹路径加入到PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class VirtualDeviceManager:
     """
