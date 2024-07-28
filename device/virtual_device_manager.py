@@ -41,6 +41,17 @@ class VirtualDeviceManager:
                 return device
 
         return None
+    
+    def get_one_available_device(self):
+        """
+        获取一个可用设备
+        :return:
+        """
+        for device in self.devices:
+            if device != None:
+                return device
+        return None
+    
 
     def start_all(self):
         """

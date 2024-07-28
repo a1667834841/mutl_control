@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 .vscode
 .history
+img/
+img.zip

@@ -1,6 +1,6 @@
 import os
 import DBMysqlHelper as db
-import config
+import config.config as config
 
 
 # 初始化设备

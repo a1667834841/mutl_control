@@ -1,7 +1,7 @@
 # coding: utf-8
 import re
 import threading
-import config as Config
+import config.config as Config
 import time
 import random
 import os
@@ -12,8 +12,8 @@ HEIGHT = 0
 local_var = threading.local()
 
 
-def send_keys(tips):
-    driver = local_var.driver
+def send_keys(tips, driver):
+    # driver = local_var.driver
     time.sleep(5)
     driver.set_fastinput_ime(True)
     time.sleep(5)
@@ -45,7 +45,7 @@ def goto_score_page(d):
 def getScore(d):
 
     score = 0
-    list_views = d(className="android.view.View")
+    list_views = d(className="android.widget.TextView")
     for scoreView in list_views:
         if scoreView is None:
             continue
@@ -75,17 +75,16 @@ def click_question(d):
     """
     点击 我要答题
     """
-    d.click(542, 743)
-    time.sleep(2)
+    d.click(539, 835)
+    time.sleep(1)
 
 def click_challenge_question(d):
     """
     已经进入 我要答题 点击 挑战答题
     """
-    click_by_image("challenge-score",d)
+    click_by_image("challenge",d)
     time.sleep(2)
     click_by_image("total",d)
-    time.sleep(2)
 
 def click_daily_question(d):
     """
@@ -98,11 +97,23 @@ def click_by_image(text,d):
     """
     根据图片点击
     """
+    isFind = False
     imges = d(className="android.widget.Image")
-    for img in imges:
-        if text in img.info["text"]:
-            img.click()
+    count = 0
+    while count < 10:
+        imges = d(className="android.widget.Image")
+        count += 1
+        for img in imges:
+            if text in img.info["text"]:
+                img.click()
+                isFind = True
+                break
+        if isFind:
             break
+        time.sleep(2)
+    
+    if not isFind:
+        raise Exception("没有找到"+text+"对应的的图片")
 
 
 

@@ -1,5 +1,5 @@
 # coding: utf-8
-import config
+import config.config as config
 import hashlib
 import requests
 from db import DBHelper

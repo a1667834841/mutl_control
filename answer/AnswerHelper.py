@@ -1,5 +1,8 @@
 # coding: utf-8
-import config
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import config
 import requests
 import base64
 import difflib
@@ -131,7 +134,7 @@ def search_answer(content, options):
     # 职责 网上搜索
     print(f'搜索 {content}')
     print(f"选项 {options}")
-    if options[-1].startswith("以上"):
+    if options[0].startswith("以上"):
         print(f'根据经验: {chr(len(options) + 64)} 很可能是正确答案')
         return chr(len(options) + 64)
     url = quote('https://www.baidu.com/s??ie=UTF-8&wd=' +

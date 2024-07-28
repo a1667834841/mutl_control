@@ -1,6 +1,6 @@
 # coding: utf-8
 import threading
-import config
+import config.config as config
 
 lock = threading.Lock()
 

@@ -1,6 +1,6 @@
 import random
 import threading
-import config
+import config.config as config
 
 
 def initDevices(devices):
