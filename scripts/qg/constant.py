@@ -32,4 +32,12 @@ XXQG_MINE_RESOURCE_ID = "cn.xuexi.android:id/comm_head_xuexi_mine"
 
 
 
+# ====== event code ======
+# 登录设备
+LOGIN_DEVICE_EVENT = "login"
+# 登录验证码
+LOGIN_VERIFY_EVENT = "login_verify"
+
+
+
 

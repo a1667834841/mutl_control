@@ -1,6 +1,42 @@
+import logging
 import random
 import threading
 import config.config as config
+
+
+# CREATE TABLE `event_business` (
+#   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+#   `event_code` varchar(256) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '事件编码',
+#   `event_uid` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '事件唯一值',
+#   `event_req` varchar(256) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '事件入参',
+#   `event_res` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '事件出参',
+#   `status` bigint(20) DEFAULT NULL COMMENT '执行状态 -2=未执行 -1=执行中 1=执行成功 2=执行失败',
+#   `create_time` bigint(20) DEFAULT NULL,
+#   `update_time` bigint(20) DEFAULT NULL,
+#   PRIMARY KEY (`id`) USING BTREE
+# ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
+class EventBusiness:
+    """
+    事件业务表
+    """
+    def __init__(self, eventCode, eventUid, eventReq, eventRes, status, createTime, updateTime):
+        self.eventCode = eventCode
+        self.eventUid = eventUid
+        self.eventReq = eventReq
+        self.eventRes = eventRes
+        self.status = status
+        self.createTime = createTime
+        self.updateTime = updateTime
+
+    def __str__(self):
+        return "eventCode:%s,eventUid:%s,eventReq:%s,eventRes:%s,status:%s,createTime:%s,updateTime:%s" % (self.eventCode, self.eventUid, self.eventReq, self.eventRes, self.status, self.createTime, self.updateTime)
+    
+    def updateByEventUid(self):
+        updateSql = "UPDATE event_business SET event_res='%s',status='%s' WHERE event_uid='%s'" % (
+            self.eventRes, self.status, self.eventUid)
+        config.MYSQL_CURSOR.execute(updateSql)
+        config.MYSQL_DB.commit()
+
 
 
 def initDevices(devices):
@@ -66,14 +102,21 @@ def clearVerifyCodeByPhone(phone):
 # 查询空闲的设备
 
 
-def getFreeDevice():
-    selectSql = "SELECT device.device_id FROM device left join user_device on device.device_id = user_device.device_id WHERE free= -1 and status=1 GROUP BY device.device_id ORDER BY count(device.device_id) limit 1"
+def getFreeDevice(phone):
+    selectSql = "SELECT device.device_id FROM device left join user_device on device.device_id = user_device.device_id WHERE status= 'free' and online=1 and user_device.phone = %s" % (
+        phone)
     config.MYSQL_CURSOR.execute(selectSql)
-    devices = config.MYSQL_CURSOR.fetchmany()
-    # 随机获取一个设备
-    if len(devices) > 0:
-        return devices[0][0]
-    return None
+    device = config.MYSQL_CURSOR.fetchone()
+    # 如果之前有匹配过的设备 则返回之前的设备
+    if device is not None:
+        return device[0]
+    
+    # 随机获取一个可用设备
+    selectSql = "SELECT device.device_id FROM device WHERE status= 'free' and online=1 limit 1"
+    config.MYSQL_CURSOR.execute(selectSql)
+    device = config.MYSQL_CURSOR.fetchone()
+    if device is not None:
+        return device[0]
 
 
 def checkFreeDevice(deviceId):
@@ -147,20 +190,27 @@ def getSerialAccountMap():
 # 设置设备可用状态
 
 
-def setDeviceFree(deviceId, free):
+def setDeviceOnline(deviceId, online):
     lock = threading.Lock()
     lock.acquire()
-    updateSql = "UPDATE device SET free=%s WHERE device_id='%s'" % (
-        free, deviceId)
+    updateSql = "UPDATE device SET online=%s WHERE device_id='%s'" % (
+        online, deviceId)
     config.MYSQL_CURSOR.execute(updateSql)
     lock.release()
     config.MYSQL_DB.commit()
+
+# 设置所有的设备为离线状态
+def setAllDeviceOffline():
+    updateSql = "UPDATE device SET online=0"
+    config.MYSQL_CURSOR.execute(updateSql)
+    config.MYSQL_DB.commit()
+
 
 
 # 设置设备在线/离线状态
 
 
-def setDeviceStatus(deviceId, status):
+def setDeviceOnline(deviceId, status):
     updateSql = "UPDATE device SET status=%s WHERE device_id='%s'" % (
         status, deviceId)
     config.MYSQL_CURSOR.execute(updateSql)
@@ -175,15 +225,16 @@ def initDeviceToAvaliable(deviceId):
     device = config.MYSQL_CURSOR.fetchone()
     if device is None:
         # 插入设备
-        insertSql = "INSERT INTO device (device_id,status,free) VALUES ('%s',1,-1)" % (
+        insertSql = "INSERT INTO device (device_id,online,status) VALUES ('%s',1,'free')" % (
             deviceId)
-        config.MYSQL_CURSOR.execute(insertSql)
+        result = config.MYSQL_CURSOR.execute(insertSql)
+        logger.info("插入设备结果:%s", result)
     else:
         # 更新设备状态
-        updateSql = "UPDATE device SET status=1,free=-1 WHERE device_id='%s'" % (
+        updateSql = "UPDATE device SET status='free',online=1 WHERE device_id='%s'" % (
             deviceId)
         config.MYSQL_CURSOR.execute(updateSql)
-        config.MYSQL_DB.commit()
+    config.MYSQL_DB.commit()
 
 # 设置验证码
 
@@ -203,3 +254,18 @@ def getUserByUid(uid):
     if user is not None:
         return user
     return None
+
+# 查询 event_business 表 event_code=LOGIN_EVENT 的记录 且 status=-2
+def getLoginDevice() -> list[EventBusiness]:
+    eventBusiness = []
+    selectSql = "SELECT * FROM event_business WHERE event_code='LOGIN_EVENT' and status=-2"
+    config.MYSQL_CURSOR.execute(selectSql)
+    config.MYSQL_DB.commit()
+    loginDevices = config.MYSQL_CURSOR.fetchall()
+    for loginDevice in loginDevices:
+        eventBusiness.append(EventBusiness(loginDevice[1], loginDevice[2], loginDevice[3], loginDevice[4], loginDevice[5], loginDevice[6], loginDevice[7]))
+    
+    return eventBusiness
+
+
+logger = logging.getLogger(__name__)

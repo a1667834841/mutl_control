@@ -1,16 +1,18 @@
 # coding: utf-8
 from datetime import date
-import io
+import os,sys
 import re
+sys.path.append(os.getcwd())
 import traceback
-# from answer import AnswerHelper
+from scripts.qg.answer import AnswerHelper
+
 # from answer import *
 import os
 import sys
-pwd = os.getcwd()
-sys.path.append(pwd)
-sys.path.append(pwd+"\\answer")
-import AnswerHelper
+# pwd = os.getcwd()
+# sys.path.append(pwd)
+# sys.path.append(pwd+"\\answer")
+# import AnswerHelper
 from db import DBHelper
 import time
 import random
@@ -44,11 +46,17 @@ EXCEPTION_ACTIVITY = "com.alibaba.wireless.security.open.middletier.fc.ui.Contai
 def answer(login_user, vd,d):
     mobile = login_user.phone
     # 去积分页面
-    serial = d.serial
     SimulateHelper.click_question(d)
     logging.info("进入答题页面")
     if d(text="去看看").exists(timeout=2):
-        d(className="//android.view.View")[0].click()
+        views = d(className="android.widget.TextView")
+        
+        i = 0
+        for view in views:
+            # print(view.info["text"])
+            if "错题集" in view.info["text"]:
+                view.click()
+                i = i + 1
     # x, y = SimulateHelper.getMobileXY("two_fight_question")
     # d.click(x, y)
     # print(x, y)
@@ -80,6 +88,7 @@ def answer(login_user, vd,d):
             
 
     task_type = task_type_current(d)
+    print("当前任务类型:"+task_type)
             
     # 双人对战
     has_two_fight_question = DBHelper.get_record_from_db(
@@ -89,7 +98,8 @@ def answer(login_user, vd,d):
         if __two_fight_question__(d):
             DBHelper.insert_record_to_db(
                 mobile, date.today(), "two_fight_question")
-                
+        else:
+            print("今日"+mobile+"双人对战已完成")                
     # 挑战答题
     if XXQG_CHALLENGE_ACTIVITY == task_type:
         has_challenge_question = DBHelper.get_record_from_db(
@@ -100,6 +110,8 @@ def answer(login_user, vd,d):
                     mobile, date.today(), "challenge_question")
             else:
                 d.press("back")
+        else:
+            print("今日"+mobile+"挑战答题已完成")
 
     # 四人对战
     if XXQG_FOUR_ACTIVITY == task_type:
@@ -112,6 +124,8 @@ def answer(login_user, vd,d):
             if is_ok:
                 DBHelper.insert_record_to_db(
                     mobile, date.today(), "four_fight_question")
+        else:
+            print("今日"+mobile+"四人对战已完成")
     print("答题结束")
     # time.sleep(1)
     # SimulateHelper.swipe_score_top(d)
@@ -471,10 +485,12 @@ def __two_fight_question__(d):
                 name = nameView.info["text"]
                 score = scoreView.info["text"]
                 print(name+"当前得分:" + score)
+                optionsExisits = d(
+                    className="android.widget.RadioButton").exists(timeout=10)
+                if not optionsExisits:
+                    raise Exception("答题页面找不到对应选项")
                 optionsEL = d(
                     className="android.widget.RadioButton")
-                if len(optionsEL) == 0:
-                    d.press("back")
                 try:
                     time.sleep(0.1)
                     d().screenshot().save(d.serial+"ocr.png")
@@ -498,13 +514,14 @@ def __two_fight_question__(d):
                         return True
                 except:
                     optionsEL[0].click()
-            success = True
+            success = int(score) > 100
         except:
             traceback.print_exc()
             print("出错")
+            return success
         finally:
             d.press("back")
-        return score > "0"
+        return success
 
     is_ok = two_fight_answer(d)
     
@@ -513,7 +530,6 @@ def __two_fight_question__(d):
         if (d(description="退出").exists(timeout=5)):
             d(description="退出").click()
     print("双人对战结束.")
-    is_ok = True
     return is_ok
 
 

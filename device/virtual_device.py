@@ -4,26 +4,28 @@ import logging
 设备 核心api
 """
 
-class DeviceStatus(Enum):
+class DeviceStatus:
     """
     设备状态
     """
-    OFF = 0  # 已停止
-    STARTING = 1  # 启动中
-    RUNNING = 2  # 已启动
-    STOPPING = 3  # 停止中
+    OFF = "off"  # 已停止
+    STARTING = "starting"  # 启动中
+    FREE = "free"  # 空闲
+    RUNNING = "running"  # 运行中
+    STOPPING = "stopping"  # 停止中
 
-class VirtualDevice:
+class VirtualDevice():
     """
     设备
     """
-    serialNumber = None  # 设备序列号
-    status = None  # 设备状态 0:已停止 1:启动中 2:已启动 3:停止中 
-    device = None  # 设备实例
+    serialNumber : str  # 设备序列号
+    online : int  # 是否在线  -1:离线 1:在线
+    status : str   # 设备状态 0:已停止 1:启动中 2:已启动 3:停止中 
+    device : object  # 设备实例
 
-    def __init__(self, serialNumber,device,status=DeviceStatus.OFF):
+    def __init__(self, serialNumber:str,device:object,status:str):
         self.serialNumber = serialNumber
-        self.status = status
+        self.status = DeviceStatus.FREE
         self.device = device
 
     def start(self):

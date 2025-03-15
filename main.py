@@ -1,44 +1,60 @@
-import os
+import logging
 import sys
-from device.virtual_device_manager import VirtualDeviceManager
+import threading
+import signal
+import time
+from urllib import request
+from interface.app import app
+from device.virtual_device_manager import VirtualDeviceManager 
+from scripts.qg.crontask import run_jobs, stop_jobs
+from util.rec.capche import Capche
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# 创建一个事件对象
+stop_event = threading.Event()
+
+def signal_handler(signum, frame):
+    logger.info("接收到终止信号，正在停止所有线程...")
+    stop_event.set()
+    sys.exit(0)
 
 
-def print_folder_tree(path, parent_is_last=1, depth_limit=-1, tab_width=1):
-    """
-    以树状打印输出文件夹下的文件, 并返回文件夹内的所有文件
-    :param tab_width: 空格宽度
-    :param path: 文件夹路径
-    :param depth_limit: 要输出文件夹的层数, -1为输出全部文件及文件夹
-    :param parent_is_last: 递归调用上级文件夹是否是最后一个文件(夹), 控制输出 │ 树干
-    :return: 返回path下的所有文件的数组
-    """
-    files = []
-    if len(str(parent_is_last)) - 1 == depth_limit:
-        return files
-    items = os.listdir(path)
-    for index, i in enumerate(items):
-        is_last = index == len(items) - 1
-        i_path = path + "/" + i
-        for k in str(parent_is_last)[1:]:
-            if k == "0":
-                print("│" + "\t" * tab_width, end="")
-            if k == "1":
-                print("\t" * tab_width, end="")
-        if is_last:
-            print("└── ", end="")
-        else:
-            print("├── ", end="")
-        if os.path.isdir(i_path):
-            print(i)
-            files.extend(print_folder_tree(
-                path=i_path, depth_limit=depth_limit, parent_is_last=(parent_is_last * 10 + 1) if is_last else (parent_is_last * 10)))
-        else:
-            print(i_path.split("/")[-1])
-            files.append(i_path)
-    return files
+def run_flask():
+    app.run()
 
-if __name__ == "__main__":
-    print(sys.path)
-    print(sys.stdout.encoding)
-    VirtualDeviceManager()
+def init():
+    # adb启动
+    vdm = VirtualDeviceManager()
+    # 图像识别模块启动
+    capche = Capche()
+
+def run():
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+        init()
+        # 在单独的线程中运行定时任务
+        jobs_thread = threading.Thread(target=run_jobs, args=(stop_event,))
+        jobs_thread.start()
+        
+        # 在主线程中运行Flask
+        run_flask()
+     
+    except Exception as e:
+        logger.error(f'发生错误: {str(e)}')
+    finally:
+        stop_jobs()  # 停止定时任务
+        # 等待所有线程结束
+        jobs_thread.join()
+        logger.info('多控平台v1.0.0已停止')
+
+if __name__ == '__main__':
+    print('多控平台v1.0.0启动')
+    logger.info('多控平台v1.0.0启动')
+    run()
+
+
+
+
     

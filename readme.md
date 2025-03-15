@@ -60,3 +60,7 @@ sys.path.append(rootPath)
 ### 在push项目时遇到问题：Push failed Empty reply from server
 执行
 git config --global --unset http.proxy
+
+### adb wifi连接
+adb pair ip:port
+adb connect ip:port

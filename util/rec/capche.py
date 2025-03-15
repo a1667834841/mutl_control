@@ -38,6 +38,7 @@ class Capche:
         "革果":"apple",
         "杯子":"cup",
         "免子":"rabbit",
+        "兔子":"rabbit",
         "椅子":"chair",
         "蝴蝶":"butterfly",
         "草莓":"strawberry",
@@ -62,18 +63,26 @@ class Capche:
         "向白萎":"sunflower",
         "向日羹":"sunflower",
         "蓝子":"basket",
+        "菠萝":"pineapple",
     }
 
     def __init__(self):
+        if Capche.model is None or Capche.ocr is None:
+            self.refresh()
+        pass
+       
+    def refresh(self):
         current_path = os.path.abspath(os.path.dirname(__file__))
-        self.model = YOLO(current_path+"/best.pt")
-        self.ocr = ddddocr.DdddOcr()
+        Capche.model = YOLO(current_path+"/best.pt")
+        Capche.ocr = ddddocr.DdddOcr()
+        print("图像识别模型加载成功")
+
 
     def get_box_class(self,image):
         """
         识别图片 返回物体box坐标和类别
         """
-        model = self.model
+        model = Capche.model
         rec_result_list = []
         results = model(image)
         for result in results:
@@ -109,7 +118,7 @@ class Capche:
         try:
             file = open(path, 'rb')
             image = file.read()
-            result = self.ocr.classification(image)
+            result = Capche.ocr.classification(image)
         except Exception as e:
             print(f"识别图片失败，错误信息：{e}")
             result = None
